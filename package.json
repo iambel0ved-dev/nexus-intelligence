@@ -1,0 +1,29 @@
+{
+  "name": "nexus-intelligence",
+  "version": "1.0.0",
+  "description": "An AI-powered stealth engine for SaaS competitor price monitoring and market intelligence.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iambel0ved-dev/nexus-intelligence.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/iambel0ved-dev/nexus-intelligence/issues"
+  },
+  "homepage": "https://github.com/iambel0ved-dev/nexus-intelligence#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.2.4",
+    "playwright": "^1.58.2",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
