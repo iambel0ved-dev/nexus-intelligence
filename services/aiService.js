@@ -11,15 +11,19 @@ async function extractPricingData(htmlContent, retries = 3) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `
-        You are a pricing analyst. Extract all pricing plans from the following text.
-        Return ONLY a JSON array of objects with these keys: 
-        "plan_name", "price_value", "currency", "target_audience".
-        
-        If the price is 'Contact Us' or 'Custom', set price_value to 0.
-        If no plans are found, return an empty array [].
+    Extract AI API pricing from the provided text.
+    Rules:
+    1. "price_value" MUST be a pure number/decimal (e.g., 0.50). 
+    2. REMOVE all currency symbols, letters (like 'p'), or percent signs from price_value.
+    3. If a price is complex (e.g., "1.5% + 20p"), extract ONLY the primary numerical rate or set it to 0.
+    4. Standardize all AI model prices to "Price per 1 Million Tokens".
+    5. If the price is 'Contact Us' or 'Custom', set price_value to 0.
 
-        Text to analyze:
-        ${htmlContent.substring(0, 20000)} 
+    Return ONLY a JSON array: 
+    [{"plan_name": "string", "price_value": number, "currency": "USD"}]
+
+    Text to analyze:
+    ${htmlContent.substring(0, 20000)}
     `;
 
     for (let i = 0; i < retries; i++) {
