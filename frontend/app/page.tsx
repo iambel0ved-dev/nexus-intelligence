@@ -87,13 +87,13 @@ export default async function Index() {
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-center w-full max-w-sm md:max-w-none">
             <a 
-              href="mailto:your-email@example.com" 
+              href="mailto:iambel0ved@outlook.com" 
               className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-full font-bold transition-all text-center"
             >
               Book a Consultation
             </a>
             <a 
-              href="https://contra.com/your-username" 
+              href="https://contra.com/iambel0ved" 
               target="_blank" 
               className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-bold transition-all text-center"
             >
