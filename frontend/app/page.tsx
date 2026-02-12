@@ -19,8 +19,9 @@ export default async function Index() {
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20">
-      {/* 2026 Professional Navbar */}
+    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 relative">
+      
+      {/* 1. FIXED NAVBAR */}
       <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-50">
         <div className="w-full max-w-5xl flex justify-between items-center px-6">
           <span className="font-black text-xl tracking-tighter text-blue-500">NEXUS INTEL</span>
@@ -29,12 +30,13 @@ export default async function Index() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Live Monitoring</span>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Market Live</span>
           </div>
         </div>
       </nav>
 
       <div className="w-full max-w-5xl px-6 flex flex-col gap-12 mt-12 animate-in fade-in duration-700 items-center">
+        {/* 2. HERO SECTION */}
         <header className="flex flex-col gap-4 w-full">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none">
             Market <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Intelligence</span>
@@ -44,7 +46,7 @@ export default async function Index() {
           </p>
         </header>
 
-        {/* Dashboard Grid */}
+        {/* 3. ORGANIZED DASHBOARD GRID */}
         <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
           {plans?.map((plan: any, i: number) => (
             <div key={i} className="group relative p-8 rounded-[2rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-300 shadow-2xl overflow-hidden flex flex-col">
@@ -72,20 +74,13 @@ export default async function Index() {
           ))}
         </main>
 
-        {/* Empty State */}
-        {(!plans || plans.length === 0) && (
-          <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl w-full">
-            <p className="text-slate-500 font-mono">No market data discovered yet.</p>
-          </div>
-        )}
-
-        {/* --- CONTACT SECTION (NOW PROPERLY PLACED) --- */}
+        {/* 4. FOOTER CONTACT SECTION */}
         <section className="mt-24 w-full max-w-2xl border-t border-white/10 pt-20 text-center flex flex-col items-center">
-          <h2 className="text-3xl font-bold mb-4">Need an Automation Specialist?</h2>
+          <h2 className="text-3xl font-bold mb-4 text-white">Need an Automation Specialist?</h2>
           <p className="text-slate-400 mb-8 max-w-md">
             I help startups build autonomous systems, AI pipelines, and real-time market tools like this one.
           </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center w-full max-w-sm md:max-w-none">
+          <div className="flex flex-col md:flex-row gap-4 justify-center w-full max-w-sm md:max-w-none mb-10">
             <a 
               href="mailto:iambel0ved@outlook.com" 
               className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-full font-bold transition-all text-center"
@@ -93,7 +88,7 @@ export default async function Index() {
               Book a Consultation
             </a>
             <a 
-              href="https://contra.com/iambel0ved" 
+              href="https://contra.com/beloved_gapbldnr?referralExperimentNid=DEFAULT_REFERRAL_PROGRAM&referrerUsername=beloved_gapbldnr" 
               target="_blank" 
               className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-bold transition-all text-center"
             >
@@ -101,8 +96,22 @@ export default async function Index() {
             </a>
           </div>
         </section>
-        {/* --- END CONTACT SECTION --- */}
+      </div>
 
+      {/* 5. FLOATING ACTION BUTTON (Visible on scroll) */}
+      <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end gap-4 group">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold text-blue-400 shadow-2xl mb-1">
+          Let&apos;s build something great 🚀
+        </div>
+        <a 
+          href="mailto:iambel0ved@outlook.com" 
+          className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-110 active:scale-95 transition-all border border-blue-400"
+          title="Hire Me"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+            <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>
+          </svg>
+        </a>
       </div>
     </div>
   );
