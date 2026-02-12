@@ -8,6 +8,7 @@ export default function NexusDashboard() {
   const [activeCompany, setActiveCompany] = useState<string>("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   
   const supabase = createClient();
 
@@ -29,22 +30,28 @@ export default function NexusDashboard() {
     ? plans 
     : plans.filter((p) => p.companies?.name === activeCompany);
 
-  // 3. Lead Capture Logic (Discord Webhook)
+  // 3. Lead Capture Logic (Discord Webhook + Success UI)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     
-    const message = {
-      content: "🚀 **New Lead from Nexus Intelligence!**",
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const project = formData.get("message") as string;
+
+    const discordMessage = {
+      content: "🚀 **New Business Lead: Nexus Intelligence**",
       embeds: [{
         title: "Inquiry Details",
-        color: 5814783,
+        color: 3447003, // Professional Blue
         fields: [
-          { name: "Name", value: formData.get("name") as string, inline: true },
-          { name: "Email", value: formData.get("email") as string, inline: true },
-          { name: "Project", value: formData.get("message") as string }
-        ]
+          { name: "Name", value: name, inline: true },
+          { name: "Email", value: email, inline: true },
+          { name: "Project Detail", value: project }
+        ],
+        footer: { text: "2026 Surveillance Engine" },
+        timestamp: new Date().toISOString()
       }]
     };
 
@@ -55,44 +62,58 @@ export default function NexusDashboard() {
       await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(message),
+        body: JSON.stringify(discordMessage),
       });
-      alert("Message sent! I'll get back to you ASAP.");
-      setIsModalOpen(false);
+      
+      // Custom Success Flow
+      setSubmitted(true);
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSubmitted(false);
+      }, 4000);
+      
     } catch (err) {
-      alert("Error sending message. Please email me at iambel0ved@outlook.com");
+      alert("Error sending message. Please reach out to iambel0ved@outlook.com directly.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 relative">
+    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 relative selection:bg-blue-500/30">
       
       {/* NAV */}
-      <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-40">
-        <div className="w-full max-w-6xl flex justify-between items-center px-6">
+      <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-40 px-6">
+        <div className="w-full max-w-6xl flex justify-between items-center">
           <span className="font-black text-xl tracking-tighter text-blue-500">NEXUS INTEL</span>
-          <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-1 rounded">2026 MARKET DATA</span>
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Live Surveillance</span>
+          </div>
         </div>
       </nav>
 
-      <div className="w-full max-w-6xl px-6 flex flex-col gap-8 mt-12">
-        <header>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">AI Price <span className="text-blue-500 text-glow">Surveillance</span></h1>
-          <p className="text-slate-400 mt-2 max-w-xl">Don't overpay for tokens. Filter 17+ providers to find the most efficient infrastructure for your scale.</p>
+      <div className="w-full max-w-6xl px-6 flex flex-col gap-10 mt-16">
+        {/* HERO */}
+        <header className="flex flex-col gap-4">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none">
+            Market <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent italic">Intelligence</span>
+          </h1>
+          <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
+            Autonomous cost-tracking for 17+ AI providers. Standardizing infrastructure data for the 2026 token economy.
+          </p>
         </header>
 
-        {/* ORGANIZATION TABS */}
-        <div className="w-full flex gap-2 overflow-x-auto py-4 scrollbar-hide border-b border-white/5">
+        {/* TABS FOR ORGANIZATION */}
+        <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar border-b border-white/5 scroll-smooth">
           {companies.map((company) => (
             <button
               key={company}
               onClick={() => setActiveCompany(company)}
               className={`px-6 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
                 activeCompany === company 
-                ? "bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
-                : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                ? "bg-blue-600 border-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
+                : "bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10"
               }`}
             >
               {company}
@@ -103,24 +124,31 @@ export default function NexusDashboard() {
         {/* ORGANIZED GRID */}
         <main className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredPlans.map((plan, i) => (
-            <div key={i} className="p-6 rounded-[2rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/30 transition-all group relative overflow-hidden">
-              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-tighter">{plan.companies?.name}</p>
-              <h3 className="text-md font-medium text-slate-200 mt-1">{plan.plan_name}</h3>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-3xl font-bold tracking-tight">${plan.price_value}</span>
-                <span className="text-[10px] text-slate-500 font-mono">/ 1M Tokens</span>
+            <div key={i} className="group relative p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col shadow-2xl overflow-hidden">
+              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">
+                {plan.companies?.name || "AI Provider"}
+              </span>
+              <h2 className="text-lg font-medium text-slate-200 group-hover:text-white transition-colors">
+                {plan.plan_name}
+              </h2>
+              <div className="flex items-baseline gap-1 mt-6">
+                <span className="text-3xl font-bold text-white tracking-tight">${plan.price_value}</span>
+                <span className="text-slate-500 text-[10px] font-mono">/ 1M Tokens</span>
               </div>
-              <div className="absolute -bottom-4 -right-4 h-20 w-20 bg-blue-500/5 blur-[40px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
+              <div className="absolute -bottom-4 -right-4 h-20 w-20 bg-blue-600/5 blur-[40px] rounded-full group-hover:bg-blue-600/10 transition-colors" />
             </div>
           ))}
         </main>
       </div>
 
-      {/* FAB */}
+      {/* FLOATING ACTION BUTTON */}
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)] hover:scale-110 active:scale-95 transition-all z-50 border border-blue-400"
+        className="fixed bottom-8 right-8 h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:scale-110 active:scale-95 transition-all z-50 border border-blue-400 group"
       >
+        <div className="absolute right-20 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold text-blue-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+          Hire an Specialist ⚡️
+        </div>
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
@@ -129,18 +157,30 @@ export default function NexusDashboard() {
       {/* LEAD CAPTURE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] max-w-md w-full relative shadow-2xl">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors">✕</button>
-            <h2 className="text-3xl font-bold mb-2 tracking-tight">Hire Me</h2>
-            <p className="text-slate-400 text-sm mb-8 leading-relaxed">Let&apos;s build an autonomous system for your business. Drop your details below.</p>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <input name="name" required type="text" placeholder="Your Name" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
-              <input name="email" required type="email" placeholder="Your Email" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
-              <textarea name="message" required placeholder="Project details..." rows={3} className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
-              <button disabled={loading} className="bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50">
-                {loading ? "Sending..." : "Send Inquiry"}
-              </button>
-            </form>
+          <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] max-w-md w-full relative shadow-2xl">
+            {!submitted ? (
+              <>
+                <button onClick={() => setIsModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-colors text-xl">✕</button>
+                <h2 className="text-3xl font-bold mb-2 tracking-tighter">Hire Me</h2>
+                <p className="text-slate-400 text-sm mb-8">Building autonomous pipelines and AI infrastructure. Drop your project details below.</p>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <input name="name" required placeholder="Name" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors" />
+                  <input name="email" required type="email" placeholder="Email Address" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors" />
+                  <textarea name="message" required placeholder="Project description..." rows={3} className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors" />
+                  <button disabled={loading} className="bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50 mt-2">
+                    {loading ? "Establishing connection..." : "Send Inquiry"}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-10 animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/30">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Success!</h2>
+                <p className="text-slate-400">Inquiry captured. I will contact you via email shortly.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
