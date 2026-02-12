@@ -1,118 +1,149 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
 
-export default async function Index() {
-  const supabase = await createClient();
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
-  // Fetching your 17+ AI companies and their pricing data
-  const { data: plans, error } = await supabase
-    .from("pricing_plans")
-    .select(`
-      plan_name,
-      price_value,
-      updated_at,
-      companies ( name )
-    `)
-    .order("updated_at", { ascending: false });
+export default function NexusDashboard() {
+  const [plans, setPlans] = useState<any[]>([]);
+  const [activeCompany, setActiveCompany] = useState<string>("All");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const supabase = createClient();
 
-  if (error) {
-    console.error("Supabase Error:", error.message);
-  }
+  // 1. Fetch Data
+  useEffect(() => {
+    async function fetchData() {
+      const { data } = await supabase
+        .from("pricing_plans")
+        .select(`plan_name, price_value, updated_at, companies ( name )`)
+        .order("price_value", { ascending: true });
+      if (data) setPlans(data);
+    }
+    fetchData();
+  }, []);
+
+  // 2. Organization Logic
+  const companies = ["All", ...new Set(plans.map((p) => p.companies?.name))];
+  const filteredPlans = activeCompany === "All" 
+    ? plans 
+    : plans.filter((p) => p.companies?.name === activeCompany);
+
+  // 3. Lead Capture Logic (Discord Webhook)
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    
+    const message = {
+      content: "🚀 **New Lead from Nexus Intelligence!**",
+      embeds: [{
+        title: "Inquiry Details",
+        color: 5814783,
+        fields: [
+          { name: "Name", value: formData.get("name") as string, inline: true },
+          { name: "Email", value: formData.get("email") as string, inline: true },
+          { name: "Project", value: formData.get("message") as string }
+        ]
+      }]
+    };
+
+    // PASTE YOUR DISCORD WEBHOOK URL HERE
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1470821046708863150/lkwmxFSUy1JQhii5rMyX4TwuI-D2-hkcKUK0tPhoIETW6b7tbpEnNUQJGU8cW0YPs7iY";
+
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(message),
+      });
+      alert("Message sent! I'll get back to you ASAP.");
+      setIsModalOpen(false);
+    } catch (err) {
+      alert("Error sending message. Please email me at iambel0ved@outlook.com");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 relative">
       
-      {/* 1. FIXED NAVBAR */}
-      <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-50">
-        <div className="w-full max-w-5xl flex justify-between items-center px-6">
+      {/* NAV */}
+      <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-40">
+        <div className="w-full max-w-6xl flex justify-between items-center px-6">
           <span className="font-black text-xl tracking-tighter text-blue-500">NEXUS INTEL</span>
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Market Live</span>
-          </div>
+          <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-1 rounded">2026 MARKET DATA</span>
         </div>
       </nav>
 
-      <div className="w-full max-w-5xl px-6 flex flex-col gap-12 mt-12 animate-in fade-in duration-700 items-center">
-        {/* 2. HERO SECTION */}
-        <header className="flex flex-col gap-4 w-full">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none">
-            Market <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Intelligence</span>
-          </h1>
-          <p className="text-lg text-slate-400 max-w-2xl leading-relaxed">
-            Automated surveillance of 17+ global AI providers. Real-time cost analysis for the 2026 token economy.
-          </p>
+      <div className="w-full max-w-6xl px-6 flex flex-col gap-8 mt-12">
+        <header>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">AI Price <span className="text-blue-500 text-glow">Surveillance</span></h1>
+          <p className="text-slate-400 mt-2 max-w-xl">Don't overpay for tokens. Filter 17+ providers to find the most efficient infrastructure for your scale.</p>
         </header>
 
-        {/* 3. ORGANIZED DASHBOARD GRID */}
-        <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {plans?.map((plan: any, i: number) => (
-            <div key={i} className="group relative p-8 rounded-[2rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-300 shadow-2xl overflow-hidden flex flex-col">
-              <div className="flex justify-between items-start mb-6">
-                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-tighter">
-                  {/* @ts-ignore */}
-                  {plan.companies?.name || "AI Provider"}
-                </span>
-                <span className="text-[10px] text-slate-600 font-mono italic">
-                   {new Date(plan.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+        {/* ORGANIZATION TABS */}
+        <div className="w-full flex gap-2 overflow-x-auto py-4 scrollbar-hide border-b border-white/5">
+          {companies.map((company) => (
+            <button
+              key={company}
+              onClick={() => setActiveCompany(company)}
+              className={`px-6 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                activeCompany === company 
+                ? "bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+              }`}
+            >
+              {company}
+            </button>
+          ))}
+        </div>
+
+        {/* ORGANIZED GRID */}
+        <main className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {filteredPlans.map((plan, i) => (
+            <div key={i} className="p-6 rounded-[2rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-tighter">{plan.companies?.name}</p>
+              <h3 className="text-md font-medium text-slate-200 mt-1">{plan.plan_name}</h3>
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className="text-3xl font-bold tracking-tight">${plan.price_value}</span>
+                <span className="text-[10px] text-slate-500 font-mono">/ 1M Tokens</span>
               </div>
-              
-              <h2 className="text-xl font-medium text-slate-200 mb-2 group-hover:text-white transition-colors">
-                {plan.plan_name}
-              </h2>
-              
-              <div className="flex items-baseline gap-1 mt-auto pt-6">
-                <span className="text-4xl font-bold text-white tracking-tight">${plan.price_value}</span>
-                <span className="text-slate-500 text-xs font-mono">/ 1M Tokens</span>
-              </div>
-              
-              <div className="absolute -bottom-4 -right-4 h-24 w-24 bg-blue-600/10 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute -bottom-4 -right-4 h-20 w-20 bg-blue-500/5 blur-[40px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
             </div>
           ))}
         </main>
+      </div>
 
-        {/* 4. FOOTER CONTACT SECTION */}
-        <section className="mt-24 w-full max-w-2xl border-t border-white/10 pt-20 text-center flex flex-col items-center">
-          <h2 className="text-3xl font-bold mb-4 text-white">Need an Automation Specialist?</h2>
-          <p className="text-slate-400 mb-8 max-w-md">
-            I help startups build autonomous systems, AI pipelines, and real-time market tools like this one.
-          </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center w-full max-w-sm md:max-w-none mb-10">
-            <a 
-              href="mailto:iambel0ved@outlook.com" 
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-full font-bold transition-all text-center"
-            >
-              Book a Consultation
-            </a>
-            <a 
-              href="https://contra.com/beloved_gapbldnr?referralExperimentNid=DEFAULT_REFERRAL_PROGRAM&referrerUsername=beloved_gapbldnr" 
-              target="_blank" 
-              className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-bold transition-all text-center"
-            >
-              Hire me on Contra
-            </a>
+      {/* FAB */}
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-8 right-8 h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)] hover:scale-110 active:scale-95 transition-all z-50 border border-blue-400"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+
+      {/* LEAD CAPTURE MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-white/10 p-8 rounded-[3rem] max-w-md w-full relative shadow-2xl">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors">✕</button>
+            <h2 className="text-3xl font-bold mb-2 tracking-tight">Hire Me</h2>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">Let&apos;s build an autonomous system for your business. Drop your details below.</p>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <input name="name" required type="text" placeholder="Your Name" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
+              <input name="email" required type="email" placeholder="Your Email" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
+              <textarea name="message" required placeholder="Project details..." rows={3} className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors" />
+              <button disabled={loading} className="bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50">
+                {loading ? "Sending..." : "Send Inquiry"}
+              </button>
+            </form>
           </div>
-        </section>
-      </div>
-
-      {/* 5. FLOATING ACTION BUTTON (Visible on scroll) */}
-      <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end gap-4 group">
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold text-blue-400 shadow-2xl mb-1">
-          Let&apos;s build something great 🚀
         </div>
-        <a 
-          href="mailto:iambel0ved@outlook.com" 
-          className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-110 active:scale-95 transition-all border border-blue-400"
-          title="Hire Me"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-            <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>
-          </svg>
-        </a>
-      </div>
+      )}
     </div>
   );
 }
