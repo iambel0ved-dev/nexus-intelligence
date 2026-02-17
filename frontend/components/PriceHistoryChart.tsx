@@ -2,37 +2,44 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function PriceHistoryChart({ data }: { data: any[] }) {
-  // Format data: [{ date: '2026-02-01', price: 0.05 }, ...]
+  // PHASE 3: Mapping from price_snapshots table data
   const chartData = data.map(item => ({
     date: new Date(item.detected_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    price: item.new_price,
-  }));
+    price: item.price_value || item.new_price, // Fallback for flexibility
+  })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
     <div className="h-[300px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
           <XAxis 
             dataKey="date" 
             axisLine={false} 
             tickLine={false} 
-            tick={{fontSize: 12, fill: '#6b7280'}} 
+            tick={{fontSize: 10, fill: '#64748b'}} 
           />
           <YAxis 
             hide 
             domain={['auto', 'auto']} 
           />
           <Tooltip 
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            contentStyle={{ 
+              backgroundColor: '#0f172a', 
+              borderRadius: '12px', 
+              border: '1px solid rgba(255,255,255,0.05)', 
+              color: '#fff',
+              fontSize: '12px'
+            }}
+            itemStyle={{ color: '#3b82f6' }}
           />
           <Line 
             type="monotone" 
             dataKey="price" 
-            stroke="#2563eb" 
-            strokeWidth={2} 
-            dot={{ r: 4, fill: '#2563eb' }} 
-            activeDot={{ r: 6 }} 
+            stroke="#3b82f6" 
+            strokeWidth={3} 
+            dot={{ r: 0 }} // Clean line, dots on hover only
+            activeDot={{ r: 6, fill: '#3b82f6', strokeWidth: 0 }} 
           />
         </LineChart>
       </ResponsiveContainer>

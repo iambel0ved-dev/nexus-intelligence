@@ -3,6 +3,7 @@ const fs = require('fs');
 const { chromium, firefox } = require('playwright'); // Added Firefox
 const { createClient } = require('@supabase/supabase-js');
 const { extractPricingData } = require('./services/aiService');
+const { processPriceIntelligence } = require('./utils/intelligence');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
@@ -59,8 +60,10 @@ async function runScraper() {
             const pricingPlans = await extractPricingData(bodyText);
 
             if (pricingPlans && pricingPlans.length > 0) {
-                // ... your existing DB logic ...
-                console.log(`✅ ${companyName} synced successfully.`);
+                // This is the new Intelligence Hook
+                await processPriceIntelligence(supabase, companyName, pricingPlans, url);
+                
+                console.log(`✅ ${companyName} synced and intelligence processed.`);
             }
 
             // THE CRITICAL FIX: 20-second pause AFTER each company

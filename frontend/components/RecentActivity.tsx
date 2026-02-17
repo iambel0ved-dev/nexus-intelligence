@@ -1,23 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client"; // Using the client utility
-import { ArrowDownIcon, ArrowUpIcon, Activity } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { ArrowDownIcon, ArrowUpIcon, Twitter } from "lucide-react";
 
 export default function RecentActivity() {
   const [activity, setActivity] = useState<any[]>([]);
   const supabase = createClient();
 
+  const fetchActivity = async () => {
+    const { data } = await supabase
+      .from("price_history")
+      .select("*")
+      .order("detected_at", { ascending: false })
+      .limit(10);
+    if (data) setActivity(data);
+  };
+
   useEffect(() => {
-    async function fetchActivity() {
-      const { data } = await supabase
-        .from("price_history")
-        .select("*")
-        .order("detected_at", { ascending: false })
-        .limit(10);
-      if (data) setActivity(data);
-    }
     fetchActivity();
+
+    // PHASE 2 REAL-TIME: Listen for new price events
+    const channel = supabase
+      .channel('realtime_price_changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'price_history' }, 
+        () => fetchActivity()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   if (activity.length === 0) return (
@@ -39,13 +51,28 @@ export default function RecentActivity() {
               <p className="text-xs font-medium text-slate-200">{event.product_name}</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className={`text-xs font-bold ${parseFloat(event.delta_percentage) < 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {event.delta_percentage > 0 ? '+' : ''}{event.delta_percentage}%
-            </p>
-            <p className="text-[9px] font-mono text-slate-600 uppercase">
-              {new Date(event.detected_at).toLocaleDateString([], {month: 'short', day: 'numeric'})}
-            </p>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className={`text-xs font-bold ${parseFloat(event.delta_percentage) < 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {event.delta_percentage > 0 ? '+' : ''}{event.delta_percentage}%
+              </p>
+              <p className="text-[9px] font-mono text-slate-600 uppercase">
+                {new Date(event.detected_at).toLocaleDateString([], {month: 'short', day: 'numeric'})}
+              </p>
+            </div>
+
+            {/* PHASE 5: Manual X Posting Support */}
+            {event.twitter_intents?.url && (
+              <a 
+                href={event.twitter_intents.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-0 group-hover:opacity-100 p-2 bg-blue-500/10 text-blue-400 rounded-full hover:bg-blue-500 hover:text-white transition-all"
+              >
+                <Twitter size={12} />
+              </a>
+            )}
           </div>
         </div>
       ))}
