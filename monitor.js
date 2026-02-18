@@ -3,9 +3,9 @@ const { chromium } = require('playwright');
 const { createClient } = require('@supabase/supabase-js');
 const { extractPricingData } = require('./services/aiService');
 
+// Use Service Role Key for backend bypass if needed, or keep Anon if permissions allow
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-// Helper for waiting
 const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
 async function sendAlert(message) {
@@ -20,21 +20,32 @@ async function sendAlert(message) {
 
 async function detectPriceChanges(companyName, newPlans) {
     const { data: company } = await supabase.from('companies').select('id').eq('name', companyName).single();
+    if (!company) return;
+
     const { data: oldPlans } = await supabase.from('pricing_plans').select('plan_name, price_value').eq('company_id', company.id);
 
     for (const newPlan of newPlans) {
         const match = oldPlans?.find(old => old.plan_name === newPlan.plan_name);
+        const newPrice = parseFloat(newPlan.price_value);
+
+        // 1. Log to price_snapshots (This feeds your Chart)
+        await supabase.from('price_snapshots').insert([{
+            company_id: company.id,
+            plan_name: newPlan.plan_name,
+            price_value: newPrice,
+            detected_at: new Date().toISOString()
+        }]);
+
         if (match) {
             const oldPrice = parseFloat(match.price_value);
-            const newPrice = parseFloat(newPlan.price_value);
             if (newPrice < oldPrice) {
+                // This is a simple alert, broadcast.js handles the "Intent" buttons later
                 await sendAlert(`🚨 **PRICE DROP** [${companyName}]: ${newPlan.plan_name} fell from $${oldPrice} to $${newPrice}!`);
             }
-        } else {
-            console.log(`✨ New plan found for ${companyName}: ${newPlan.plan_name}`);
         }
     }
 
+    // 2. Upsert to pricing_plans (This feeds your Grid)
     const plansToUpsert = newPlans.map(plan => ({
         company_id: company.id,
         plan_name: plan.plan_name,
@@ -59,11 +70,10 @@ async function startMonitor() {
 
         try {
             await page.goto(company.pricing_url, { waitUntil: 'domcontentloaded' });
-            await wait(10000); // 10s for page to settle
+            await wait(10000); 
             
             const text = await page.evaluate(() => document.documentElement.innerText);
             
-            // GEMINI PROTECTION: Wait 30 seconds before calling the AI
             console.log(`⏳ Gemini Cooldown (30s)...`);
             await wait(30000); 
 
@@ -79,7 +89,7 @@ async function startMonitor() {
         }
     }
     await browser.close();
-    console.log("🏁 All companies finished.");
+    console.log("🏁 All companies finished. Data is now in snapshots.");
 }
 
 startMonitor();

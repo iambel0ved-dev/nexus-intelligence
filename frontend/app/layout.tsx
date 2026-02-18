@@ -8,9 +8,29 @@ const defaultUrl = process.env.VERCEL_URL
   : "http://localhost:3000";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Nexus Intelligence | AI Market Surveillance",
-  description: "Automated real-time tracking of global AI API pricing and market shifts.",
+  title: "Nexus Intel | AI Infrastructure Surveillance",
+  description: "Autonomous market intelligence for the 2026 token economy. Built by Abeeb Beloved Salam.",
+  openGraph: {
+    title: "Nexus Intelligence Oracle",
+    description: "Live tracking and AI analysis of global provider pricing.",
+    url: "https://nexus-intelligence-six.vercel.app/",
+    siteName: "Nexus Intel",
+    images: [
+      {
+        url: "/og-image.png", // You can add a screenshot of your dashboard here later
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nexus Intel",
+    description: "Autonomous AI Infrastructure Surveillance.",
+    creator: "@iambel0ved",
+  },
 };
 
 const geistSans = Geist({

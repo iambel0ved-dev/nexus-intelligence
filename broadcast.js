@@ -1,98 +1,124 @@
 require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
 const { createClient } = require('@supabase/supabase-js');
+const { chromium } = require('playwright'); 
 const { getHighImpactEvents, generateSocialPayload } = require('./utils/intelligence');
-const { generateGlobalInsights } = require('./utils/contentEngine'); // NEW: Trend Module
+const { generateGlobalInsights } = require('./utils/contentEngine');
 
 // Initialize Clients
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const DISCORD_WEBHOOK = process.env.DISCORD_SURVEILLANCE_WEBHOOK;
 const DASHBOARD_URL = "https://nexus-intelligence-six.vercel.app/"; 
 
-async function runBroadcast() {
-  console.log("🤖 Nexus Intel: Starting Broadcast Sequence...");
+async function takeSnapshot() {
+  console.log("📸 Warmup: Generating visual evidence...");
+  try {
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setViewportSize({ width: 1200, height: 630 });
+    await page.goto(DASHBOARD_URL, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+    const buffer = await page.screenshot({ type: 'png' });
+    await browser.close();
+    return buffer;
+  } catch (err) {
+    console.error("❌ Snapshot failed:", err.message);
+    return null;
+  }
+}
 
-  // 1. Fetch High Impact Event (Single Price Shift)
-  const event = await getHighImpactEvents(supabase);
+async function runBroadcast() {
+  console.log("🤖 Nexus Intel: Starting Multi-Tier Broadcast...");
   
-  // 2. Fetch History for Deep Trend Analysis (Last 20 changes)
+  const today = new Date();
+  const isMonday = today.getDay() === 1;
+
+  // 1. Data Gathering
+  const event = await getHighImpactEvents(supabase);
   const { data: history } = await supabase
     .from('price_history')
     .select('*')
     .order('detected_at', { ascending: false })
     .limit(20);
 
-  // 3. Generate the "Deep Story" via Content Engine
+  // 2. AI Content Generation
   let deepInsights = null;
   if (history && history.length > 0) {
     try {
       deepInsights = await generateGlobalInsights(history);
-      console.log("🧠 Market Pattern Analysis complete.");
-    } catch (e) {
-      console.error("⚠️ AI Content Engine error:", e.message);
-    }
+      
+      // Archive to the "Oracle" Table (Always happens for the public /reports page)
+      await supabase.from('intelligence_reports').insert([{
+        report_type: isMonday ? 'weekly' : 'daily_insight',
+        content: deepInsights,
+        created_at: today.toISOString()
+      }]);
+      console.log("💾 Intelligence archived to Oracle Archive.");
+    } catch (e) { console.error("⚠️ AI Engine error:", e.message); }
   }
 
-  if (!event && !deepInsights) {
-    return console.log("💤 No significant data to broadcast today.");
-  }
+  if (!event && !deepInsights) return console.log("💤 No significant data today.");
+
+  // 3. Prepare Visual Evidence (Warm up the link crawlers)
+  await takeSnapshot();
 
   // 4. Prepare Social Payloads
   const eventPayload = event ? generateSocialPayload(event) : null;
+  
   const xText = eventPayload 
-    ? `${eventPayload.headline}\n\n${eventPayload.body}\n\n${eventPayload.cta}\n${eventPayload.tags}`
-    : `Nexus Intel: Analyzing market patterns...\n\n${deepInsights?.market_insight}\n\nCheck the live data: ${DASHBOARD_URL}`;
+    ? `${eventPayload.headline}\n\n${eventPayload.body}\n\nAnalysis: ${DASHBOARD_URL}reports\n${eventPayload.tags}`
+    : `Nexus Intel: Market Pattern Detected\n\n${deepInsights?.market_insight}\n\nFull Oracle Report: ${DASHBOARD_URL}reports`;
 
-  // Intent URLs
+  const linkedInHeadline = eventPayload ? eventPayload.headline : "📈 AI Infrastructure Intelligence Update";
+  const linkedInText = `🚀 Nexus Intel Update\n\n${deepInsights?.market_insight || "Analyzing AI infrastructure shifts."}\n\nAutomated surveillance of the 2026 token economy. Built by Abeeb Beloved Salam.\n\nRead more: ${DASHBOARD_URL}reports\n\n#AIAutomation #SystemsArchitecture #NexusIntel`;
+
   const xIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(xText)}`;
-  const linkedinIntent = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(DASHBOARD_URL)}`;
+  const linkedinIntent = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(DASHBOARD_URL + "reports")}`;
 
   // 5. Build Discord Command Center Message
   const discordMessage = {
-    content: "📡 **NEXUS INTEL: INTELLIGENCE BROADCAST READY**",
-    embeds: [
-      {
-        title: eventPayload ? eventPayload.headline : "Market Pattern Analysis",
-        description: eventPayload ? eventPayload.body : "No single event detected, but patterns found in history.",
-        color: 3799235, // Nexus Blue
-        fields: [
-          { name: "𝕏 (Twitter) Intent", value: `[Post to X Account](${xIntent})`, inline: true },
-          { name: "💼 LinkedIn Intent", value: `[Share Dashboard](${linkedinIntent})`, inline: true },
-        ],
-        footer: { text: "Built by Abeeb Beloved Salam | Systems Architect" }
-      }
-    ]
+    content: event ? "🚀 **NEXUS: FLASH INTELLIGENCE DETECTED**" : "📡 **NEXUS: DAILY SURVEILLANCE LOG**",
+    embeds: []
   };
 
-  // Add the "Deep Insight" block if available
-  if (deepInsights) {
+  // TIER 1: Daily Event/Insight (The "Discovery" Card)
+  discordMessage.embeds.push({
+    title: linkedInHeadline,
+    description: eventPayload ? eventPayload.body : `**Daily Analyst Insight:** ${deepInsights?.market_insight}`,
+    color: 3799235, 
+    fields: [
+      { name: "𝕏 (Twitter) Intent", value: `[Post to X Account](${xIntent})`, inline: true },
+      { name: "💼 LinkedIn Intent", value: `[Share to LinkedIn](${linkedinIntent})`, inline: true },
+      { name: "📋 LinkedIn Copy-Paste", value: `\`\`\`${linkedInText}\`\`\`` }
+    ],
+    footer: { text: "Nexus Surveillance | Built by Abeeb Beloved Salam" }
+  });
+
+  // TIER 2: Weekly Strategic Report (Only on Mondays)
+  if (isMonday && deepInsights) {
     discordMessage.embeds.push({
-      title: "🧠 AI Content Generation Module (JSON Output)",
-      description: `**Market Insight:** ${deepInsights.market_insight}`,
-      color: 10181046, // Purple
+      title: "🏛️ WEEKLY STRATEGIC ORACLE REPORT",
+      description: `**Executive Summary:**\n${deepInsights.market_insight}\n\nThis high-level analysis has been archived to your public Oracle. Perfect for high-ticket client discovery.`,
+      color: 10181046, 
       fields: [
-        { name: "Tweet Template", value: deepInsights.tweet_templates[0] || "N/A" },
-        { name: "Weekly Report Markdown", value: `\`\`\`${deepInsights.weekly_report_markdown.substring(0, 500)}...\`\`\`` },
-        { name: "Hiring CTA", value: deepInsights.call_to_action }
+        { name: "Platform", value: "LinkedIn /reports", inline: true },
+        { name: "Target", value: "Strategic Contracts", inline: true },
+        { name: "Action", value: `[View Full Oracle](${DASHBOARD_URL}reports)`, inline: false }
       ]
     });
   }
 
   // Send to Discord
   try {
-    const response = await fetch(DISCORD_WEBHOOK, {
+    await fetch(DISCORD_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(discordMessage)
     });
-    
-    if (response.ok) console.log("✅ Intelligence Package sent to Discord.");
-    else console.error("❌ Discord Webhook failed.");
-  } catch (err) {
-    console.error("❌ Network error sending to Discord:", err.message);
-  }
+    console.log("✅ Intelligence Package sent to Discord.");
+  } catch (err) { console.error("❌ Discord delivery failed:", err.message); }
 
-  // 6. Automated Fallback (X Only - Disabled if suspended)
+  // 6. Automated X Fallback
   if (process.env.X_API_KEY && process.env.X_ACCOUNT_ACTIVE === 'true') {
     try {
       const twitterClient = new TwitterApi({
@@ -103,9 +129,7 @@ async function runBroadcast() {
       });
       await twitterClient.v2.tweet(xText);
       console.log("🚀 Auto-tweet successfully broadcasted.");
-    } catch (e) {
-      console.log("⚠️ X Auto-post skipped (Account probation or error). Use manual intent.");
-    }
+    } catch (e) { console.log("⚠️ X Auto-post skipped (Account probation)."); }
   }
 }
 

@@ -6,7 +6,8 @@ import RecentActivity from "@/components/RecentActivity";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import IntelligenceInsight from "@/components/IntelligenceInsight";
 import { downloadIntelligenceReport } from "@/utils/exportReport";
-import { Download, Rocket, ShieldCheck, Zap } from "lucide-react";
+import { Download, Rocket, ShieldCheck, Zap, ArrowRight, BarChart3, Clock, Table as TableIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function NexusDashboard() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -19,7 +20,6 @@ export default function NexusDashboard() {
   
   const supabase = createClient();
 
-  // 1. Fetch Plan Data
   useEffect(() => {
     async function fetchData() {
       const { data } = await supabase
@@ -31,7 +31,6 @@ export default function NexusDashboard() {
     fetchData();
   }, []);
 
-  // 2. Fetch Historical Snapshots & Latest AI Insight
   useEffect(() => {
     async function fetchIntelligence() {
       let historyQuery = supabase
@@ -60,20 +59,17 @@ export default function NexusDashboard() {
     fetchIntelligence();
   }, [activeCompany]);
 
-  // 3. Organization Logic
   const companies = ["All", ...new Set(plans.map((p) => p.companies?.name).filter(Boolean))];
   const filteredPlans = activeCompany === "All" 
     ? plans 
     : plans.filter((p) => p.companies?.name === activeCompany);
 
-  // 4. Lead Capture Logic
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    
     const discordMessage = {
-      content: "🚀 **New AI Automation Lead: Nexus Intelligence**",
+      content: "🚀 **New AI Automation Lead**",
       embeds: [{
         title: "Specialist Inquiry",
         color: 3447003,
@@ -82,214 +78,194 @@ export default function NexusDashboard() {
           { name: "Email", value: formData.get("email") as string, inline: true },
           { name: "Requirement", value: formData.get("message") as string }
         ],
-        footer: { text: "Nexus Surveillance Engine | Built for 2026 Economy" },
+        footer: { text: "Nexus Intel | 2026" },
         timestamp: new Date().toISOString()
       }]
     };
 
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1470821046708863150/lkwmxFSUy1JQhii5rMyX4TwuI-D2-hkcKUK0tPhoIETW6b7tbpEnNUQJGU8cW0YPs7iY";
-
     try {
-      await fetch(WEBHOOK_URL, {
+      await fetch("YOUR_DISCORD_WEBHOOK_URL", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(discordMessage),
       });
       setSubmitted(true);
       setTimeout(() => { setIsModalOpen(false); setSubmitted(false); }, 4000);
-    } catch (err) { alert("Error sending message."); } finally { setLoading(false); }
+    } catch (err) { alert("Error."); } finally { setLoading(false); }
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 relative selection:bg-blue-500/30">
+    <div className="flex-1 w-full flex flex-col items-center bg-black min-h-screen text-white pb-20 selection:bg-blue-500/30">
       
-      {/* NAV */}
+      {/* NAVIGATION */}
       <nav className="w-full flex justify-center border-b border-white/10 h-16 sticky top-0 bg-black/80 backdrop-blur-md z-40 px-6">
         <div className="w-full max-w-7xl flex justify-between items-center">
-          <span className="font-black text-xl tracking-tighter text-blue-500 uppercase">Nexus Intel</span>
+          <Link href="/" className="font-black text-xl tracking-tighter text-blue-500 uppercase">Nexus Intel</Link>
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-2">
-              <ShieldCheck size={14} className="text-emerald-500" />
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">System Verified</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Live Surveillance</span>
+            <Link href="/reports" className="text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Oracle Archive</Link>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Surveillance Active</span>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="w-full max-w-7xl px-6 flex flex-col gap-10 mt-16">
-        {/* HERO */}
-        <header className="flex flex-col gap-4">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none">
-            Market <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent italic">Intelligence</span>
+      <div className="w-full max-w-7xl px-6 flex flex-col gap-10 mt-12">
+        <header className="flex flex-col gap-2">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-none">
+            Infrastructure <span className="text-blue-500">Oracle</span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl leading-relaxed font-medium">
-            Autonomous cost-tracking for 17+ AI providers. Standardizing infrastructure data for the <span className="text-white">2026 token economy.</span>
+          <p className="text-slate-500 max-w-xl text-sm md:text-base">
+            Autonomous surveillance and standardized cost-tracking for the 2026 AI economy.
           </p>
         </header>
 
-        {/* LAYOUT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
-          {/* LEFT: CHART & PRICING */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 flex flex-col gap-8">
             
-            {/* Intelligence Trend Panel */}
-            <section className="p-1 rounded-[3rem] bg-gradient-to-br from-blue-500/20 to-emerald-500/20 border border-white/5 shadow-2xl">
-                <div className="bg-slate-950/90 rounded-[2.9rem] p-8">
-                    <div className="flex items-center justify-between mb-4 px-2">
-                        <h3 className="text-xs font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                          <Zap size={14} /> Pricing Trajectory — {activeCompany}
-                        </h3>
-                    </div>
+            {/* CHART */}
+            <section className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 shadow-2xl">
+                <div className="flex items-center gap-2 mb-6 text-slate-400">
+                    <BarChart3 size={16} />
+                    <h3 className="text-xs font-bold uppercase tracking-widest">Price Trajectory: {activeCompany}</h3>
+                </div>
+                <div className="h-[350px]">
                     <PriceHistoryChart data={history} />
                 </div>
             </section>
 
-            {/* COMPANY FILTERS & EXPORT */}
-            <div className="flex flex-wrap gap-2 items-center border-b border-white/5 pb-6">
-              <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
-                {companies.map((company) => (
-                  <button
-                    key={company}
-                    onClick={() => setActiveCompany(company)}
-                    className={`px-6 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
-                      activeCompany === company 
-                      ? "bg-blue-600 border-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" 
-                      : "bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10"
-                    }`}
-                  >
-                    {company}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => downloadIntelligenceReport(filteredPlans, activeCompany)}
-                className={`
-                  ml-auto flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-300
-                  ${activeCompany === "All" 
-                    ? "bg-blue-500/10 border-blue-500/40 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:bg-blue-500 hover:text-white" 
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white"
-                  }
-                  text-[10px] font-black uppercase tracking-widest group
-                `}
-              >
-                <Download size={14} className="group-hover:scale-110 transition-transform" />
-                <span>Export Intel</span>
-                {activeCompany === "All" && (
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                  </span>
-                )}
+            {/* FILTERS */}
+            <div className="flex flex-wrap gap-3 items-center">
+              {companies.map((company) => (
+                <button
+                  key={company}
+                  onClick={() => setActiveCompany(company)}
+                  className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all border ${
+                    activeCompany === company ? "bg-blue-600 border-blue-400 text-white" : "bg-white/5 border-white/5 text-slate-500 hover:text-white"
+                  }`}
+                >
+                  {company}
+                </button>
+              ))}
+              <button onClick={() => downloadIntelligenceReport(filteredPlans, activeCompany)} className="ml-auto flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold hover:bg-emerald-500 hover:text-white transition-all">
+                <Download size={14} /> Export Intel
               </button>
             </div>
+
+            {/* COMPARISON MATRIX */}
+            <section className="overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-900/20">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TableIcon size={14} className="text-blue-500" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Market Comparison Matrix</h3>
+                </div>
+                <span className="text-[9px] font-mono text-slate-600 uppercase">
+                  Last Sync: {new Date().toLocaleDateString()}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white/5">
+                      <th className="p-5 text-[9px] font-black uppercase text-slate-500 tracking-widest">Provider</th>
+                      <th className="p-5 text-[9px] font-black uppercase text-slate-500 tracking-widest">Plan</th>
+                      <th className="p-5 text-[9px] font-black uppercase text-slate-500 tracking-widest">Price (1M)</th>
+                      <th className="p-5 text-[9px] font-black uppercase text-slate-500 tracking-widest">Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredPlans.slice(0, 6).map((plan, i) => (
+                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="p-5 text-xs font-bold text-white">{plan.companies?.name}</td>
+                        <td className="p-5 text-xs text-slate-400">{plan.plan_name}</td>
+                        <td className="p-5 text-xs font-mono text-emerald-400">${plan.price_value}</td>
+                        <td className="p-5 text-[9px] font-black text-slate-600 uppercase">Standardized</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
             {/* PRICING GRID */}
             <main className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredPlans.map((plan, i) => (
-                <div key={i} className="group relative p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all duration-300 flex flex-col shadow-2xl overflow-hidden">
-                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">
-                    {plan.companies?.name || "AI Provider"}
-                  </span>
-                  <h2 className="text-lg font-medium text-slate-200 group-hover:text-white transition-colors">
-                    {plan.plan_name}
-                  </h2>
-                  <div className="flex items-baseline gap-1 mt-6">
-                    <span className="text-3xl font-bold text-white tracking-tight">${plan.price_value}</span>
-                    <span className="text-slate-500 text-[10px] font-mono">/ 1M Tokens</span>
+                <div key={i} className="p-8 rounded-[2.5rem] bg-slate-900/60 border border-white/5 hover:border-blue-500/50 transition-all flex flex-col group">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{plan.companies?.name}</span>
+                    <Zap size={14} className="text-slate-800 group-hover:text-blue-500 transition-colors" />
                   </div>
-                  <div className="absolute -bottom-4 -right-4 h-20 w-20 bg-blue-600/5 blur-[40px] rounded-full group-hover:bg-blue-600/10 transition-colors" />
+                  <h2 className="text-lg font-bold text-white mb-6 leading-tight">{plan.plan_name}</h2>
+                  <div className="flex items-baseline gap-1 mb-10">
+                    <span className="text-3xl font-black text-white tracking-tighter">${plan.price_value}</span>
+                    <span className="text-slate-600 text-[10px] uppercase font-bold tracking-widest">/ 1M Tokens</span>
+                  </div>
+                  <Link href="/reports" className="mt-auto pt-6 border-t border-white/5 text-[10px] font-black text-slate-500 hover:text-blue-400 transition-all flex items-center justify-between group/link uppercase tracking-[0.2em]">
+                    Read Analysis <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
               ))}
             </main>
           </div>
 
-          {/* RIGHT: ACTIVITY FEED & INSIGHTS */}
-          <aside className="lg:col-span-4 flex flex-col gap-6">
+          {/* SIDEBAR */}
+          <aside className="lg:col-span-4 flex flex-col gap-8">
             <IntelligenceInsight insight={latestIntelligence} />
-            
-            <div className="bg-slate-900/20 p-6 rounded-[2rem] border border-white/5">
-              <h3 className="text-xs font-mono text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                <div className="h-1 w-1 rounded-full bg-blue-500" />
-                Live Activity Log
-              </h3>
+            <div className="bg-slate-900/30 p-6 rounded-[2rem] border border-white/5">
+              <div className="flex items-center gap-2 mb-6 text-slate-500">
+                <Clock size={14} />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest">Surveillance Log</h3>
+              </div>
               <RecentActivity />
             </div>
           </aside>
-
         </div>
 
-        {/* NEW: HIRE ME SECTION (PHASE 6) */}
-        <section className="mt-20 p-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-[3rem] shadow-[0_0_50px_rgba(37,99,235,0.2)]">
-          <div className="bg-slate-950 rounded-[2.8rem] p-10 flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="max-w-xl">
-              <div className="flex items-center gap-2 text-blue-400 mb-4">
-                <Rocket size={20} />
-                <span className="text-xs font-black uppercase tracking-[0.3em]">Specialist Services</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tighter">Hire me for AI Automation</h2>
-              <p className="text-slate-400 text-lg leading-relaxed">
-                I architect autonomous surveillance systems, custom scrapers, and high-performance AI dashboards. 
-                Need this level of intelligence for your business? <span className="text-white">Let's build it.</span>
-              </p>
+        {/* HIRE ME */}
+        <section id="hire" className="mt-12 p-8 md:p-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[4rem] flex flex-col md:flex-row items-center justify-between gap-10 border border-blue-400/20 shadow-2xl">
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full mb-6 border border-white/10">
+               <ShieldCheck size={14} className="text-white" />
+               <span className="text-[10px] font-black uppercase tracking-widest text-white">Direct Hire Active</span>
             </div>
-            <div className="flex flex-col gap-4 w-full md:w-auto min-w-[250px]">
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="px-10 py-5 bg-blue-600 text-white rounded-2xl font-bold text-center hover:bg-blue-500 hover:scale-[1.02] transition-all shadow-xl shadow-blue-900/40 flex items-center justify-center gap-2"
-              >
-                Start Your Project
-              </button>
-              <div className="flex items-center justify-center gap-4 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                <span className="flex items-center gap-1"><div className="h-1 w-1 bg-emerald-500 rounded-full"/> Custom Pipelines</span>
-                <span className="flex items-center gap-1"><div className="h-1 w-1 bg-emerald-500 rounded-full"/> AI Strategy</span>
-              </div>
-            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tighter leading-none">Need This Built for Your Firm?</h2>
+            <p className="text-blue-100 text-lg font-medium leading-relaxed">
+              I specialize in autonomous data architecture and AI-driven surveillance systems. Secure your infrastructure for the 2026 economy.
+            </p>
           </div>
+          <button onClick={() => setIsModalOpen(true)} className="px-12 py-6 bg-white text-blue-600 rounded-3xl font-black text-lg hover:scale-105 transition-all shadow-xl">
+            Initiate Protocol
+          </button>
         </section>
       </div>
 
-      {/* FLOATING ACTION BUTTON */}
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.5)] hover:scale-110 active:scale-95 transition-all z-50 border border-blue-400 group"
-      >
-        <div className="absolute right-20 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold text-blue-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-          Hire a Specialist ⚡️
-        </div>
-        <Rocket className="text-white" size={24} />
+      {/* FAB */}
+      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-8 right-8 h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl z-50 group">
+        <Rocket className="text-white group-hover:animate-bounce" size={24} />
       </button>
 
-      {/* MODAL */}
+      {/* MODAL (Same as before, ensure Discord Webhook is correct) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 p-10 rounded-[3.5rem] max-w-md w-full relative shadow-2xl">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 p-12 rounded-[3.5rem] max-w-md w-full relative">
             {!submitted ? (
               <>
-                <button onClick={() => setIsModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-colors text-xl">✕</button>
-                <h2 className="text-3xl font-black mb-2 tracking-tighter text-white">Let's Build</h2>
-                <p className="text-slate-400 text-sm mb-8 font-medium">Currently accepting new contracts for autonomous AI systems.</p>
+                <button onClick={() => setIsModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white">✕</button>
+                <h2 className="text-3xl font-black mb-10 tracking-tighter text-white">Project Inquiry</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                  <input name="name" required placeholder="Your Name" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors text-white placeholder:text-slate-600" />
-                  <input name="email" required type="email" placeholder="Email Address" className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors text-white placeholder:text-slate-600" />
-                  <textarea name="message" required placeholder="How can I help you automate?" rows={3} className="bg-black/50 border border-white/10 p-4 rounded-2xl focus:border-blue-500 outline-none transition-colors text-white placeholder:text-slate-600" />
-                  <button disabled={loading} className="bg-blue-600 py-4 rounded-2xl font-black hover:bg-blue-500 transition-all disabled:opacity-50 mt-2 text-white uppercase tracking-widest text-xs">
-                    {loading ? "Establishing connection..." : "Send Brief"}
+                  <input name="name" required placeholder="Full Name" className="bg-black/50 border border-white/5 p-5 rounded-2xl text-white outline-none focus:border-blue-500" />
+                  <input name="email" required type="email" placeholder="Email" className="bg-black/50 border border-white/5 p-5 rounded-2xl text-white outline-none focus:border-blue-500" />
+                  <textarea name="message" required placeholder="Requirements..." rows={4} className="bg-black/50 border border-white/5 p-5 rounded-2xl text-white outline-none focus:border-blue-500" />
+                  <button disabled={loading} className="bg-blue-600 py-5 rounded-2xl font-black text-white uppercase text-xs tracking-widest">
+                    {loading ? "Transmitting..." : "Send Brief"}
                   </button>
                 </form>
               </>
             ) : (
-              <div className="text-center py-10 flex flex-col items-center gap-4">
-                <div className="h-16 w-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center">
-                  <ShieldCheck size={32} />
-                </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Transmission Received</h2>
-                <p className="text-slate-400">I'll review your project details and reach out shortly.</p>
+              <div className="text-center py-10">
+                <h2 className="text-3xl font-black text-white mb-2">Transmitted</h2>
+                <p className="text-slate-400">Archived to specialist queue.</p>
               </div>
             )}
           </div>

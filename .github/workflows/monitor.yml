@@ -1,9 +1,9 @@
-name: Price Monitor
+=name: Price Monitor
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs every 6 hours
-  workflow_dispatch: # Allows you to run it manually from GitHub UI
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch: 
 
 jobs:
   scrape:
@@ -23,10 +23,20 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Monitor
+      - name: Run Scraper & Analysis
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: node monitor.js
+
+      - name: Run Broadcast Discovery
+        env:
+            SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+            # Using your existing secret for both webhooks to ensure it works
+            DISCORD_SURVEILLANCE_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+            X_ACCOUNT_ACTIVE: 'false'
+        run: node broadcast.js
