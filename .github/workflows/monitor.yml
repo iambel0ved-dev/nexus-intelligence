@@ -1,4 +1,4 @@
-=name: Price Monitor
+name: Price Monitor
 
 on:
   schedule:
@@ -26,7 +26,8 @@ jobs:
       - name: Run Scraper & Analysis
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            # UPDATED: Matches your new GitHub Secret name and your .env
+            SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: node monitor.js
@@ -34,9 +35,9 @@ jobs:
       - name: Run Broadcast Discovery
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            # UPDATED: Matches your new GitHub Secret name
+            SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-            # Using your existing secret for both webhooks to ensure it works
             DISCORD_SURVEILLANCE_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
             X_ACCOUNT_ACTIVE: 'false'
         run: node broadcast.js

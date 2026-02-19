@@ -6,7 +6,12 @@ const { getHighImpactEvents, generateSocialPayload } = require('./utils/intellig
 const { generateGlobalInsights } = require('./utils/contentEngine');
 
 // Initialize Clients
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+// UPDATED: Using SUPABASE_SECRET_KEY (The new non-JWT high-privilege key)
+const supabase = createClient(
+    process.env.SUPABASE_URL, 
+    process.env.SUPABASE_SECRET_KEY // Using the Secret Key for the backend
+);
+
 const DISCORD_WEBHOOK = process.env.DISCORD_SURVEILLANCE_WEBHOOK;
 const DASHBOARD_URL = "https://nexus-intelligence-six.vercel.app/"; 
 
@@ -47,7 +52,7 @@ async function runBroadcast() {
     try {
       deepInsights = await generateGlobalInsights(history);
       
-      // Archive to the "Oracle" Table (Always happens for the public /reports page)
+      // Archive to the "Oracle" Table
       await supabase.from('intelligence_reports').insert([{
         report_type: isMonday ? 'weekly' : 'daily_insight',
         content: deepInsights,
@@ -59,10 +64,10 @@ async function runBroadcast() {
 
   if (!event && !deepInsights) return console.log("💤 No significant data today.");
 
-  // 3. Prepare Visual Evidence (Warm up the link crawlers)
+  // 3. Prepare Visual Evidence
   await takeSnapshot();
 
-  // 4. Prepare Social Payloads
+  // 4. Prepare Social Payloads (Directing to /reports)
   const eventPayload = event ? generateSocialPayload(event) : null;
   
   const xText = eventPayload 
@@ -81,7 +86,7 @@ async function runBroadcast() {
     embeds: []
   };
 
-  // TIER 1: Daily Event/Insight (The "Discovery" Card)
+  // TIER 1: Daily Event/Insight
   discordMessage.embeds.push({
     title: linkedInHeadline,
     description: eventPayload ? eventPayload.body : `**Daily Analyst Insight:** ${deepInsights?.market_insight}`,
@@ -94,7 +99,7 @@ async function runBroadcast() {
     footer: { text: "Nexus Surveillance | Built by Abeeb Beloved Salam" }
   });
 
-  // TIER 2: Weekly Strategic Report (Only on Mondays)
+  // TIER 2: Weekly Strategic Report
   if (isMonday && deepInsights) {
     discordMessage.embeds.push({
       title: "🏛️ WEEKLY STRATEGIC ORACLE REPORT",

@@ -2,7 +2,11 @@ const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+// UPDATED: Using SUPABASE_SECRET_KEY for full backend data access
+const supabase = createClient(
+    process.env.SUPABASE_URL, 
+    process.env.SUPABASE_SECRET_KEY
+);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function generateIntelligenceBriefing() {
@@ -14,7 +18,7 @@ async function generateIntelligenceBriefing() {
         .select('*, pricing_plans(*)');
 
     if (compError || !companies) {
-        console.error("❌ Failed to fetch data.");
+        console.error("❌ Failed to fetch data. Check your SUPABASE_SECRET_KEY.");
         return;
     }
 
@@ -22,6 +26,7 @@ async function generateIntelligenceBriefing() {
 
     console.log("🧠 Sending data to Gemini 3 for Strategic Analysis...");
 
+    // Staying with the 2026 flash model you specified
     const model = genAI.getGenerativeModel({ 
         model: "gemini-3-flash-preview",
         generationConfig: { temperature: 0.2 }

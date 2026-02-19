@@ -1,32 +1,37 @@
 require('dotenv').config();
 const fs = require('fs');
-const { chromium, firefox } = require('playwright'); // Added Firefox
+const { chromium, firefox } = require('playwright'); 
 const { createClient } = require('@supabase/supabase-js');
 const { extractPricingData } = require('./services/aiService');
 const { processPriceIntelligence } = require('./utils/intelligence');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+// UPDATED: Using SECRET_KEY to ensure full database access for syncing
+const supabase = createClient(
+    process.env.SUPABASE_URL, 
+    process.env.SUPABASE_SECRET_KEY
+);
 
 function getCompanyName(url) {
     try {
         const hostname = new URL(url).hostname;
         const parts = hostname.replace('www.', '').split('.');
         let name = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-        if (name === "Helpx" || name === "Docs") return "Adobe_Midjourney_Fix"; // Cleanup for those weird URLs
+        if (name === "Helpx" || name === "Docs") return "Adobe_Midjourney_Fix"; 
         return name;
     } catch (e) { return "Unknown"; }
 }
 
 async function runScraper() {
     const fileName = 'targets.json';
+    if (!fs.existsSync(fileName)) {
+        console.error(`❌ ${fileName} not found!`);
+        return;
+    }
     const urls = JSON.parse(fs.readFileSync(fileName, 'utf8'));
     const allResults = {};
 
-    // Launch both for versatility
     const chromeBrowser = await chromium.launch({ headless: true });
     const firefoxBrowser = await firefox.launch({ headless: true });
-
-    // ... inside runScraper function loop ...
 
     for (const url of urls) {
         const companyName = getCompanyName(url);
@@ -40,15 +45,11 @@ async function runScraper() {
         const page = await context.newPage();
         try {
             console.log(`📡 Navigating to ${url}...`);
-            
-            // Wait for 'load' for these heavy sites to ensure images/tables are in place
             await page.goto(url, { waitUntil: 'load', timeout: 90000 });
             
-            // Increased wait for heavy dynamic content (Adobe/AWS)
             console.log("⏳ Giving the page extra time to render...");
             await page.waitForTimeout(15000); 
 
-            // Deeper scroll for AWS/Adobe long pages
             await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 3));
             await page.waitForTimeout(3000);
             await page.evaluate(() => window.scrollTo(0, (document.body.scrollHeight / 3) * 2));
@@ -60,24 +61,20 @@ async function runScraper() {
             const pricingPlans = await extractPricingData(bodyText);
 
             if (pricingPlans && pricingPlans.length > 0) {
-                // This is the new Intelligence Hook
+                // Pass the high-privilege supabase client to the intelligence processor
                 await processPriceIntelligence(supabase, companyName, pricingPlans, url);
-                
                 console.log(`✅ ${companyName} synced and intelligence processed.`);
             }
 
-            // THE CRITICAL FIX: 20-second pause AFTER each company
-            // This prevents hitting the 15 requests per minute limit
             console.log("⏸️ Cooling down Gemini API (20s)...");
             await new Promise(r => setTimeout(r, 20000));
 
         } catch (err) {
             console.error(`❌ Error with ${companyName}:`, err.message);
         } finally {
-            await page.close();
+            await context.close();
         }
     }
-// ...
 
     await chromeBrowser.close();
     await firefoxBrowser.close();
