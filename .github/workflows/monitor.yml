@@ -3,7 +3,7 @@ name: Price Monitor
 on:
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight
-  workflow_dispatch: 
+  workflow_dispatch: # Allows you to trigger it manually for testing
 
 jobs:
   scrape:
@@ -18,26 +18,29 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        # This installs Resend, Playwright, and Supabase from your root package.json
         run: npm install
 
       - name: Install Playwright Browsers
+        # Necessary for the scraping engine to actually have a "head" to browse with
         run: npx playwright install --with-deps chromium
 
       - name: Run Scraper & Analysis
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            # UPDATED: Matches your new GitHub Secret name and your .env
+            # Uses your new sb_ secret key
             SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+            RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }} 
         run: node monitor.js
 
       - name: Run Broadcast Discovery
         env:
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            # UPDATED: Matches your new GitHub Secret name
             SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             DISCORD_SURVEILLANCE_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+            RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
             X_ACCOUNT_ACTIVE: 'false'
         run: node broadcast.js
