@@ -41,3 +41,6 @@ next-env.d.ts
 # Large Binary Protection (Directly addressing the SWC errors)
 *.node
 *.sst
+
+# IDX
+.idx/

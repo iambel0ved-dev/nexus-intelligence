@@ -28,7 +28,8 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react-markdown": "^10.1.0",
     "resend": "^6.9.2",
-    "tailwind-typography": "^0.1.0"
+    "tailwind-typography": "^0.1.0",
+    "twitter-api-v2": "^1.29.0"
   },
   "devDependencies": {
     "@types/estree-jsx": "^1.0.5",
