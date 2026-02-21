@@ -1,46 +1,25 @@
-# General Dependencies
-node_modules/
-.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Next.js & Build Outputs
-.next/
-out/
-build/
-dist/
-.vercel
+# Dependencies
+/node_modules
 
-# Environment & Secrets
+# Local Environment Variables
 .env
 .env.local
-.env.production
-.env.development.local
-.env.test.local
-.env.production.local
-.env*.local
-*.pem
 
-# Testing & Logs
-coverage/
+# Production build folder
+/dist
+/build
+
+# IDE files
+.idea
+.vscode
+
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# OS & Misc
+# System files
 .DS_Store
-Thumbs.db
-*.tsbuildinfo
-next-env.d.ts
 
-# Large Binary Protection (Directly addressing the SWC errors)
-*.node
-*.sst
-
-# IDX
-.idx/
